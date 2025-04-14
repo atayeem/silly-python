@@ -1,0 +1,14 @@
+"string" >> import >> str;
+
+{
+    "" >> a;
+
+    # Keep asking for name until non-empty string.
+    [[a, ""] >> str.cmp, {
+        "What is your name?\n" >>;
+        >> a;
+    }] >> while;
+
+    [["Hello, ", a] >> str.append, "!\n"] >> str.append >>;
+    
+} >> main;
