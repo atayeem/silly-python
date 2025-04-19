@@ -1,5 +1,5 @@
 from enum import Enum
-from pprint import pprint
+from os import system
 
 class TokenType(Enum):
     IDK = 0
@@ -57,7 +57,7 @@ class Token:
     
     def __str__(self):
         if type(self.data) is list:
-            return f"({self.type.name} [LIST])"
+            return f"({self.type.name})"
         
         return f"({self.type.name} '{self.data if self.data != '\n' else '\\n'}')"
 
@@ -171,86 +171,85 @@ def collect_identifiers(tokens: list[Token]) -> list[Token]:
 
 def make_tree(tokens: list[Token], t=TokenType.PROGRAM) -> Token:
     out = Token(t, [])
+    i = 0
 
-    block_start = None
-    block_end = None
-    block_depth = 0
+    while i < len(tokens):
+        token = tokens[i]
 
-    list_start = None
-    list_end = None
-    list_depth = 0
-
-    for i, token in enumerate(tokens):
         if token.type == TokenType.START_BLOCK:
-            block_depth += 1
-            if block_depth == 1:
-                block_start = i
+            depth = 1
+            block_start = i
+            i += 1
+            while i < len(tokens) and depth > 0:
+                if tokens[i].type == TokenType.START_BLOCK:
+                    depth += 1
+                elif tokens[i].type == TokenType.END_BLOCK:
+                    depth -= 1
+                i += 1
+            block_end = i - 1
+            out.data.append(make_tree(tokens[block_start + 1:block_end], TokenType.BLOCK))
+            continue
 
-        elif token.type == TokenType.END_BLOCK:
-            block_depth -= 1
-            if block_depth == 0:
-                block_end = i
-                out.data.append(make_tree(tokens[block_start+1:block_end], TokenType.BLOCK))
-                continue
-        
         elif token.type == TokenType.START_LIST:
-            list_depth += 1
-            if list_depth == 1:
-                list_start = i
+            depth = 1
+            list_start = i
+            i += 1
+            while i < len(tokens) and depth > 0:
+                if tokens[i].type == TokenType.START_LIST:
+                    depth += 1
+                elif tokens[i].type == TokenType.END_LIST:
+                    depth -= 1
+                i += 1
+            list_end = i - 1
+            out.data.append(make_tree(tokens[list_start + 1:list_end], TokenType.LIST))
+            continue
 
-        elif token.type == TokenType.END_LIST:
-            list_depth -= 1
-            if list_depth == 0:
-                list_end = i
-                out.data.append(make_tree(tokens[list_start+1:list_end], TokenType.LIST))
-                continue
-        
-        if list_depth == 0 and block_depth == 0:
+        else:
             out.data.append(token)
-    
+            i += 1
+
     return out
 
-def printl(l: list):
-    for item in l:
-        print(item)
+def parse_streams(program: Token, base=True) -> Token:
+    this_level = []
+
+    for token in program.data:
+        if isinstance(token.data, list):
+            if token.type == TokenType.LIST:
+                this_level.append(Token(TokenType.LIST, parse_streams(token, False)))
+            
+            elif token.type == TokenType.BLOCK:
+                this_level.append(Token(TokenType.BLOCK, parse_streams(token, False)))
+        else:
+            this_level.append(token)
+    
+    
+
+    if base:
+        return Token(TokenType.PROGRAM, this_level)
+    else:
+        return this_level
 
 def print_ast(t: Token, depth=0):
     print(depth * "\t" + str(t))
 
-    if type(t.data) is list:
+    if isinstance(t.data, list):
         for node in t.data:
             print_ast(node, depth+1)
 
-with open("main.garbage", "r") as f:
-    code = f.read() + "\n"
-
 def main():
-    global code
-    print("Source code:")
-    print(code)
+    with open("main.garbage", "r") as f:
+        code = f.read() + "\n"
 
     code = remove_comments(code)
-    print("\nremove_comments:")
-    print(code)
-
     code = tokenize(code)
-    print("\ntokenize:")
-    printl(code)
-
     code = collect_strings(code)
-    print("\ncollect_strings:")
-    printl(code)
-
     code = remove_sep(code)
-    print("\nremove_sep:")
-    printl(code)
-
     code = collect_identifiers(code)
-    print("\ncollect_identifiers:")
-    printl(code)
-
     code = make_tree(code)
-    print("\nmake_tree:")
+
+    system("clear")
+    code = parse_streams(code)
     print_ast(code)
 
 if __name__ == "__main__":

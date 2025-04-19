@@ -4,7 +4,7 @@
     "" >> a;
 
     # Keep asking for name until non-empty string.
-    [[a, ""] >> str.cmp, {
+    [{[a, ""] >> str.cmp}, {
         "What is your name?\n" >>;
         >> a;
     }] >> while;
