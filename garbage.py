@@ -210,8 +210,23 @@ def make_tree(tokens: list[Token], t=TokenType.PROGRAM) -> Token:
 
     return out
 
+class TokenStream:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.index = 0
+
+    def peek(self):
+        return self.tokens[self.index] if self.index < len(self.tokens) else None
+
+    def consume(self, expected_type=None):
+        token = self.peek()
+        if expected_type and token[0] != expected_type:
+            raise SyntaxError(f"Expected {expected_type}, got {token}")
+        self.index += 1
+        return token
+
 def parse_streams(program: Token, base=True) -> Token:
-    this_level = []
+    this_level: list[Token] = []
 
     for token in program.data:
         if isinstance(token.data, list):
@@ -223,8 +238,6 @@ def parse_streams(program: Token, base=True) -> Token:
         else:
             this_level.append(token)
     
-    
-
     if base:
         return Token(TokenType.PROGRAM, this_level)
     else:
