@@ -2,7 +2,7 @@ from math import sqrt, log10
 from itertools import count
 from time import time
 
-primes_cache = [2, 3, 5, 7, 11, 13, 19, 23, 29]
+primes_cache = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
 divisor_cache = [2, 3, 5, 7]
 
 # wheel of 570570
