@@ -1,3 +1,12 @@
+# it took me this long to realize that my grammar was actually garbage, and ambiguous.
+# so I stopped here. I mean what the heck, why on earth should this line:
+# "value" >> thing
+# define a string, while
+# "value" >> thing
+# calls a function, and
+# "value" >> thing
+# is invalid because thing is a function? how do you pass multiple arguments to a function?
+
 from enum import Enum
 from os import system
 
